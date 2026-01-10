@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Dict, List, Any, Iterable
+
 import pandas as pd
 
 GERMAN_STATUSES = [
@@ -63,14 +65,12 @@ def export_by_year(
     qa_rows: List[Dict[str, Any]],
     out_path: Path,
 ) -> None:
-    import re
-
     def year_from_date(d):
         if not isinstance(d, str) or "-" not in d:
             return None
         try:
             return int(d.split("-")[0])
-        except Exception:
+        except ValueError:
             return None
 
     def sort_key_top(x: str):
