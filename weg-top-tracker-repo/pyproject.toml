@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "weg-top-tracker"
+version = "0.1.0"
+description = "Parse WEG Eigentümerversammlung minutes PDFs, extract detail TOPs, and generate an execution tracker."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Niki"}]
+dependencies = [
+  "pdfplumber>=0.11.0",
+  "pandas>=2.0.0",
+  "openpyxl>=3.1.0"
+]
+
+[project.optional-dependencies]
+ocr = ["pdf2image>=1.17.0", "pytesseract>=0.3.10", "Pillow>=10.0.0"]
+
+[project.scripts]
+wegtop = "wegtop.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
