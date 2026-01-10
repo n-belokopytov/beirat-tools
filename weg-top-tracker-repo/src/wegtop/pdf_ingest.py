@@ -45,8 +45,9 @@ def _ocr_pages(pdf_path: Path, dpi: int = 140, lang: str = "deu+eng") -> List[Pa
       - tesseract + language packs
       - pdf2image + pytesseract Python deps
     """
-    from pdf2image import convert_from_path
-    import pytesseract
+    # Optional dependencies kept local to allow running without OCR extras.
+    from pdf2image import convert_from_path  # pylint: disable=import-outside-toplevel
+    import pytesseract  # pylint: disable=import-outside-toplevel
 
     images = convert_from_path(str(pdf_path), dpi=dpi)
     pages: List[PageText] = []
@@ -88,7 +89,7 @@ def ingest_pdf(
             if a2 > _avg_chars(pages) * 1.5 and a2 > 200:
                 pages = pages_ocr
                 used_ocr = True
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             # OCR optional; keep non-OCR extraction.
             pass
 

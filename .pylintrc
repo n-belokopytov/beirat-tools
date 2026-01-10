@@ -1,0 +1,47 @@
+[MASTER]
+source-roots=weg-top-tracker-repo/src
+
+[FORMAT]
+max-line-length=100
+
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    missing-function-docstring,
+    missing-class-docstring,
+    too-many-locals,
+    too-many-branches,
+    too-many-statements
+
+[BASIC]
+good-names=
+    a,
+    a0,
+    a1,
+    a2,
+    ap,
+    b,
+    d,
+    df,
+    dfa,
+    df_all,
+    df_qa,
+    df_tracker,
+    i,
+    ing,
+    ln,
+    m,
+    m2,
+    mo,
+    n,
+    p,
+    pg,
+    t,
+    y
+
+[TYPECHECK]
+ignored-modules=
+    pdf2image,
+    pdfplumber,
+    pandas,
+    pytesseract
