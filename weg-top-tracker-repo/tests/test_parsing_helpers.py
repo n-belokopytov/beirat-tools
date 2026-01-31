@@ -97,5 +97,4 @@ def test_parse_tops_from_corpus_end_to_end():
     assert parsed[0].top_number == "1"
     assert parsed[0].approved is True
 
-    parsed2 = top_parser.parse_tops_from_corpus(corpus)
-    assert parsed2[0].top_number == "1"
+    assert top_parser.parse_tops_from_corpus is parse_tops_from_corpus

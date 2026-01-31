@@ -82,28 +82,47 @@ def test_excel_exporter_writes_files(tmp_path):
     assert out_path.exists()
     assert by_year.exists()
 
-    alt_out = tmp_path / "tracker_alt.xlsx"
-    alt_by_year = tmp_path / "tracker_alt_by_year.xlsx"
-    export_excel(
-        tracker_rows=tracker_rows,
-        all_tops_rows=all_rows,
-        qa_rows=qa_rows,
-        out_path=alt_out,
-    )
-    export_by_year(
-        all_tops_rows=all_rows,
-        qa_rows=qa_rows,
-        out_path=alt_by_year,
-    )
-
-    assert alt_out.exists()
-    assert alt_by_year.exists()
-
     import pandas as pd
 
     sheets = pd.ExcelFile(by_year).sheet_names
     assert "2024" in sheets
     assert "QA_Summary" in sheets
+
+    df_year = pd.read_excel(by_year, sheet_name="2024")
+    assert str(df_year.loc[0, "top_number"]) == "1"
+    assert df_year.loc[0, "meeting_date"] == "2024-01-01"
+
+    df_qa = pd.read_excel(by_year, sheet_name="QA_Summary")
+    assert df_qa.loc[0, "file"] == "a.pdf"
+
+
+def test_export_wrappers_delegate(monkeypatch, tmp_path):
+    calls = []
+
+    class DummyExcelExporter:
+        def export(self, **kwargs):
+            calls.append(("export", kwargs))
+
+        def export_by_year(self, **kwargs):
+            calls.append(("export_by_year", kwargs))
+
+    monkeypatch.setattr("wegtop.tracker.ExcelExporter", lambda: DummyExcelExporter())
+    out_path = tmp_path / "tracker.xlsx"
+    by_year = tmp_path / "tracker_by_year.xlsx"
+
+    export_excel(
+        tracker_rows=[{"meeting_date": "2024-01-01", "top_number": "1"}],
+        all_tops_rows=[{"meeting_date": "2024-01-01", "top_number": "1", "approved": True}],
+        qa_rows=[{"file": "a.pdf"}],
+        out_path=out_path,
+    )
+    export_by_year(
+        all_tops_rows=[{"meeting_date": "2024-01-01", "top_number": "1", "approved": True}],
+        qa_rows=[{"file": "a.pdf"}],
+        out_path=by_year,
+    )
+
+    assert [c[0] for c in calls] == ["export", "export_by_year"]
 
 
 def test_app_process_pdfs_success(tmp_path):

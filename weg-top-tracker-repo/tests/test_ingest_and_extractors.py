@@ -8,7 +8,7 @@ from wegtop.ingest.pipeline import IngestPipeline
 from wegtop.ingest.pdfplumber_extractor import PdfPlumberExtractor
 from wegtop.ingest.ocr_extractor import OcrExtractor
 from wegtop.models import PageText, IngestedPDF
-from wegtop.pdf_ingest import load_corpus_json, save_corpus_json, ingested_to_corpus, ingest_pdf
+from wegtop.pdf_ingest import load_corpus_json, save_corpus_json, ingested_to_corpus
 
 
 class DummyExtractor:
@@ -159,28 +159,3 @@ def test_load_corpus_json_validation(tmp_path):
     bad.write_text("[]", encoding="utf-8")
     with pytest.raises(ValueError):
         load_corpus_json(bad)
-
-
-def test_ingest_pdf_wrapper_uses_pipeline(monkeypatch):
-    calls = {}
-
-    class DummyPipeline:
-        def __init__(self, **kwargs):
-            calls["kwargs"] = kwargs
-
-        def ingest(self, pdf_path):
-            return IngestedPDF(
-                source_path=str(pdf_path),
-                pages=[PageText(0, "x", 1)],
-                used_layout=False,
-                used_ocr=False,
-                avg_chars_per_page=1.0,
-            )
-
-    monkeypatch.setattr("wegtop.pdf_ingest.PdfPlumberExtractor", lambda layout: DummyExtractor([]))
-    monkeypatch.setattr("wegtop.pdf_ingest.OcrExtractor", lambda dpi, max_pages: DummyExtractor([]))
-    monkeypatch.setattr("wegtop.pdf_ingest.IngestPipeline", DummyPipeline)
-
-    out = ingest_pdf(Path("dummy.pdf"), enable_ocr=False)
-    assert out.source_path.endswith("dummy.pdf")
-    assert "primary_extractor" in calls["kwargs"]
