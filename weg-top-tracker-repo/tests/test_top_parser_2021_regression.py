@@ -52,7 +52,89 @@ class TestTopParser2021Regression(unittest.TestCase):
         self.assertIn("17.1", tops)
         self.assertNotIn("21", tops)
 
+    def test_cleans_noise_in_titles(self) -> None:
+        corpus = {
+            "source_path": "Protokoll Eigentümerversammlung vom 12.12.2024.pdf",
+            "pages": [
+                {
+                    "page_index": 0,
+                    "text": (
+                        "TOP 3 <<<PAGE:2>>> DSZ_ABC123 "
+                        "Beschlussfassung über den Wirtschaftsplan\n"
+                        "Ja-Stimmen: 10 Nein-Stimmen: 1 Enthaltungen: 0\n"
+                        "wird beschlossen\n"
+                    ),
+                }
+            ],
+        }
+
+        parsed = parse_tops_from_corpus(corpus)
+        self.assertEqual(1, len(parsed))
+        self.assertEqual("3", parsed[0].top_number)
+        self.assertEqual("Beschlussfassung über den Wirtschaftsplan", parsed[0].top_title)
+
+    def test_flags_orthography_issues_in_titles(self) -> None:
+        corpus = {
+            "source_path": "Protokoll Eigentümerversammlung vom 12.12.2024.pdf",
+            "pages": [
+                {
+                    "page_index": 0,
+                    "text": (
+                        "TOP 4 WIRTSCHAAAFTSPLAN!!! 2025\n"
+                        "Ja-Stimmen: 10 Nein-Stimmen: 1 Enthaltungen: 0\n"
+                        "wird beschlossen\n"
+                    ),
+                }
+            ],
+        }
+
+        parsed = parse_tops_from_corpus(corpus)
+        self.assertEqual(1, len(parsed))
+        self.assertEqual("4", parsed[0].top_number)
+        self.assertIn("repeated_characters", parsed[0].title_issues)
+        self.assertIn("repeated_punctuation", parsed[0].title_issues)
+        self.assertIn("all_caps_long", parsed[0].title_issues)
+
+    def test_repairs_umlaut_ocr_artifacts(self) -> None:
+        corpus = {
+            "source_path": "Protokoll Eigentümerversammlung vom 12.12.2024.pdf",
+            "pages": [
+                {
+                    "page_index": 0,
+                    "text": (
+                        "TOP 1 U¨bernahme Hausverwaltung\n"
+                        "Ja-Stimmen: 10 Nein-Stimmen: 1 Enthaltungen: 0\n"
+                        "wird beschlossen\n"
+                    ),
+                }
+            ],
+        }
+
+        parsed = parse_tops_from_corpus(corpus)
+        self.assertEqual(1, len(parsed))
+        self.assertEqual("1", parsed[0].top_number)
+        self.assertEqual("Übernahme Hausverwaltung", parsed[0].top_title)
+
+    def test_sanitizes_repeated_char_noise_in_titles(self) -> None:
+        corpus = {
+            "source_path": "Protokoll Eigentümerversammlung vom 26.10.2021.pdf",
+            "pages": [
+                {
+                    "page_index": 0,
+                    "text": (
+                        "TOP 17,1 SEEEEEDEE Beschlussfassung\n"
+                        "Ja-Stimmen: 120 Nein-Stimmen: 0 Enthaltungen: 0\n"
+                        "wird beschlossen\n"
+                    ),
+                }
+            ],
+        }
+
+        parsed = parse_tops_from_corpus(corpus)
+        self.assertEqual(1, len(parsed))
+        self.assertEqual("17.1", parsed[0].top_number)
+        self.assertEqual("Beschlussfassung", parsed[0].top_title)
+
 
 if __name__ == "__main__":
     unittest.main()
-

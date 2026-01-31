@@ -5,7 +5,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 
-from .text_utils import normalize_text, safe_int
+from .text_utils import normalize_text, safe_int, clean_title_text, detect_title_orthography_issues
 
 TOP_HEADER_RE = re.compile(
     r"(?mi)^\s*(?:(?:seite|s\.)\s*\d+[\s\).:-]+|\d+[\s\).:-]+)?"
@@ -172,6 +172,8 @@ def extract_title(block_text: str) -> Optional[str]:
 
     # Inline title: "TOP 4 Beschlussfassung über ..."
     t = header_inline_title(lines[0])
+    if t:
+        t = clean_title_text(t)
     if t and not is_garbage_title(t):
         return t[:240]
 
@@ -190,12 +192,15 @@ def extract_title(block_text: str) -> Optional[str]:
     for ln in lines[:12]:
         if ln.lower().startswith(stop_markers):
             break
+        ln = clean_title_text(ln)
+        if not ln:
+            continue
         if is_garbage_title(ln):
             continue
         title_lines.append(ln)
         if len(" ".join(title_lines)) > 200:
             break
-    title = " ".join(title_lines).strip()
+    title = clean_title_text(" ".join(title_lines).strip())
     return title[:240] if title else None
 
 def parse_votes_strict(block: str) -> Tuple[Optional[int], Optional[int], Optional[int]]:
@@ -269,6 +274,7 @@ class ParsedTOP:
     source_file: str
     top_number: str
     top_title: Optional[str]
+    title_issues: List[str]
     approved: Optional[bool]
     explicit_decision: Optional[bool]
     votes_yes: Optional[int]
@@ -329,11 +335,14 @@ def parse_tops_from_corpus(corpus: Dict[str, Any]) -> List[ParsedTOP]:
         if is_garbage_title(title):
             title = agenda_titles.get(top_no) or None
 
+        title_issues = detect_title_orthography_issues(title or "")
+
         out.append(ParsedTOP(
             meeting_date=meeting_date,
             source_file=Path(corpus["source_path"]).name,
             top_number=top_no,
             top_title=title,
+            title_issues=title_issues,
             approved=approved,
             explicit_decision=explicit,
             votes_yes=y,

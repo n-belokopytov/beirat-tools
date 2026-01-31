@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import math
 import re
 from typing import Dict, List, Any, Iterable
 
@@ -74,7 +75,13 @@ def export_by_year(
             return None
 
     def sort_key_top(x: str):
+        if x is None:
+            return (9999, "")
+        if isinstance(x, float) and math.isnan(x):
+            return (9999, "")
         m = re.match(r"(\d+)(.*)", str(x))
+        if not m:
+            return (9999, str(x))
         return (int(m.group(1)), m.group(2))
 
     df_all = pd.DataFrame(all_tops_rows)
