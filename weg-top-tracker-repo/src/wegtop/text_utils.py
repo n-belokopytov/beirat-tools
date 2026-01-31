@@ -71,7 +71,7 @@ def detect_title_orthography_issues(text: str) -> List[str]:
 
     if re.search(r"[!?.,]{3,}", t):
         issues.append("repeated_punctuation")
-    if re.search(r"(.)\1{3,}", t):
+    if re.search(r"(.)\1{2,}", t):  # 3+ same char (e.g. WIRTSCHAAAFTSPLAN)
         issues.append("repeated_characters")
 
     tokens = re.split(r"\s+", t)
