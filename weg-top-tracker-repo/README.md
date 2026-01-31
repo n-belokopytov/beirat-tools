@@ -31,3 +31,24 @@ System deps for OCR:
 ```bash
 wegtop --in_dir ./pdfs --out_dir ./out --ocr
 ```
+
+## Architecture
+
+The codebase is split into layered modules to keep concerns isolated and testable:
+
+- `wegtop/ingest/`: Extractors and ingestion pipeline (pdfplumber/OCR strategies).
+- `wegtop/parsing/`: TOP parsing logic (default regex-based parser).
+- `wegtop/export/`: Output writers (Excel exports).
+- `wegtop/app.py`: Application service wiring ingestion → parsing → export.
+- `wegtop/models.py`: Shared dataclasses for domain entities.
+
+Legacy entrypoints (`wegtop/pdf_ingest.py`, `wegtop/top_parser.py`, `wegtop/tracker.py`) remain as thin wrappers to preserve existing imports.
+
+## Dependency management
+
+`pyproject.toml` is the source of truth. The `requirements*.txt` files are convenience wrappers that install the project and extras:
+
+```bash
+pip install -r requirements.txt
+pip install -r requirements-ocr.txt
+```
