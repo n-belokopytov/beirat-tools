@@ -8,7 +8,9 @@ from typing import Dict, List, Optional, Tuple, Any
 from .text_utils import normalize_text, safe_int
 
 TOP_HEADER_RE = re.compile(
-    r"(?mi)^\s*(?:T\s*O\s*P|TOP|Tagesordnungspunkt|Tagesordnungs(?:punkt|p\.)?)\s+(\d+(?:\.\d+)?[a-z]?)\b"
+    r"(?mi)^\s*(?:(?:seite|s\.)\s*\d+[\s\).:-]+|\d+[\s\).:-]+)?"
+    r"(?:T\s*O\s*P|TOP|Tagesordnungspunkt|Tagesordnungs(?:punkt|p\.)?)\s+"
+    r"(\d+(?:(?:\s*[.,/]\s*|\s+)\d+)?[a-z]?)\b"
 )
 PAGE_MARKER_RE = re.compile(r"<<<PAGE:(\d+)>>>")
 
@@ -33,6 +35,93 @@ def join_pages_with_markers(pages: List[Dict[str, Any]]) -> str:
         parts.append(p.get("text", "") or "")
     return normalize_text("\n".join(parts))
 
+def normalize_top_number(raw: str) -> str:
+    """
+    Normalize common TOP number variants, especially OCR artifacts:
+      - `17,1` / `17/1` -> `17.1`
+      - `17 1` -> `17.1`
+      - trim whitespace
+    Note: run-together cases like `21` (meaning `2.1`) are handled by `repair_run_together_subtops`.
+    """
+    s = (raw or "").strip()
+    if not s:
+        return s
+
+    # Keep optional letter suffix (e.g., "4a")
+    m = re.match(r"^\s*(\d+)(.*)\s*$", s)
+    if not m:
+        return s
+    lead, rest = m.group(1), m.group(2).strip()
+
+    # Most common OCR forms for subpoints: comma, slash, dot, or a space.
+    # Examples: "17,1", "17/1", "17 1", "17 . 1"
+    m2 = re.match(r"^([.,/])\s*(\d+)([a-z]?)$", rest, flags=re.I)
+    if m2:
+        return f"{lead}.{m2.group(2)}{m2.group(3) or ''}".lower()
+
+    m3 = re.match(r"^(\d+)([a-z]?)$", rest, flags=re.I)
+    if m3:
+        # "17 1" captured as "17" + rest "1"
+        return f"{lead}.{m3.group(1)}{m3.group(2) or ''}".lower()
+
+    # Already normal or weird; just normalize comma/slash to dot and remove spaces.
+    s = re.sub(r"\s+", "", s)
+    s = s.replace(",", ".").replace("/", ".")
+    return s.lower()
+
+def repair_run_together_subtops(blocks: List[Dict[str, Any]]) -> Dict[str, str]:
+    """
+    Heuristic to repair OCR "run-together" TOPs where a subpoint loses its separator:
+      - `21` should be `2.1`
+      - `62` should be `6.2`
+
+    We only rewrite when it looks like an out-of-range jump compared to the other detected majors
+    and the base TOP appears adjacent in the parsed sequence.
+    Returns mapping old->new for items that should be rewritten.
+    """
+    top_numbers = [b.get("top_number") for b in blocks]
+    majors: List[int] = []
+    for t in top_numbers:
+        m = re.match(r"^(\d+)", str(t))
+        if m:
+            majors.append(int(m.group(1)))
+    majors_set = set(majors)
+    have = set(top_numbers)
+    rewrites: Dict[str, str] = {}
+
+    for i, t in enumerate(top_numbers):
+        if not re.fullmatch(r"\d{2,3}", str(t)):
+            continue
+        n = int(t)
+        # Only consider suspiciously large majors (typical meetings rarely have 20+ TOPs)
+        if n < 20:
+            continue
+        base = int(t[:-1])
+        sub = t[-1]
+        candidate = f"{base}.{sub}"
+        if candidate in have:
+            continue
+        if base not in majors_set:
+            continue
+        # Only rewrite when the base TOP appears adjacent in the parsed sequence.
+        base_nearby = False
+        for j, t2 in enumerate(top_numbers):
+            if j == i:
+                continue
+            m2 = re.match(r"^(\d+)", str(t2))
+            if m2 and int(m2.group(1)) == base and abs(j - i) <= 1:
+                base_nearby = True
+                break
+        if not base_nearby:
+            continue
+        # If this looks like a jump relative to the other majors, prefer the split form.
+        other_majors = [m for m in majors_set if m != n]
+        max_other = max(other_majors) if other_majors else None
+        if max_other is not None and n >= max_other + 2:
+            rewrites[t] = candidate
+
+    return rewrites
+
 def _compute_markers(full_text: str) -> List[Tuple[int, int]]:
     return [(m.start(), int(m.group(1))) for m in PAGE_MARKER_RE.finditer(full_text)]
 
@@ -54,7 +143,7 @@ def split_top_blocks(full_text: str) -> List[Dict[str, Any]]:
         end = ms[i + 1].start() if i + 1 < len(ms) else len(full_text)
         block = full_text[start:end].strip()
         blocks.append({
-            "top_number": m.group(1),
+            "top_number": normalize_top_number(m.group(1)),
             "start": start,
             "end": end,
             "page_start": _page_at(markers, start),
@@ -66,7 +155,9 @@ def split_top_blocks(full_text: str) -> List[Dict[str, Any]]:
 
 def header_inline_title(line: str) -> Optional[str]:
     m = re.match(
-        r"(?i)^(?:T\s*O\s*P|TOP|Tagesordnungspunkt|Tagesordnungs(?:punkt|p\.)?)\s+\d+(?:\.\d+)?[a-z]?\s*(.*)$",
+        r"(?i)^\s*(?:(?:seite|s\.)\s*\d+[\s\).:-]+|\d+[\s\).:-]+)?"
+        r"(?:T\s*O\s*P|TOP|Tagesordnungspunkt|Tagesordnungs(?:punkt|p\.)?)\s+"
+        r"\d+(?:(?:\s*[.,/]\s*|\s+)\d+)?[a-z]?\s*(.*)$",
         line.strip(),
     )
     if not m:
@@ -85,7 +176,11 @@ def extract_title(block_text: str) -> Optional[str]:
         return t[:240]
 
     # Drop pure header line
-    if re.match(r"(?i)^(?:T\s*O\s*P|TOP|Tagesordnungspunkt)\s+\d", lines[0]):
+    if re.match(
+        r"(?i)^\s*(?:(?:seite|s\.)\s*\d+[\s\).:-]+|\d+[\s\).:-]+)?"
+        r"(?:T\s*O\s*P|TOP|Tagesordnungspunkt)\s+\d",
+        lines[0],
+    ):
         lines = lines[1:]
     if not lines:
         return None
@@ -126,7 +221,7 @@ def parse_votes_strict(block: str) -> Tuple[Optional[int], Optional[int], Option
 def detect_explicit_decision(block: str) -> Optional[bool]:
     b = block.lower()
     if any(x in b for x in ["abgelehnt", "nicht angenommen", "nicht beschlossen", "kein beschluss", "zurückgestellt",
-                            "vertagt", "ohne beschluss", "beschlussfassung entfällt"]):
+                            "vertagt", "ohne beschluss", "keine beschlussfassung", "keine beschluss", "beschlussfassung entfällt"]):
         return False
     if any(x in b for x in ["wird angenommen", "angenommen", "beschließt", "wird beschlossen",
                             "mehrheitlich beschlossen", "beschluss gefasst"]):
@@ -192,6 +287,11 @@ def parse_tops_from_corpus(corpus: Dict[str, Any]) -> List[ParsedTOP]:
     full_text = join_pages_with_markers(pages)
     meeting_date = extract_meeting_date(full_text, Path(corpus["source_path"]).name)
     blocks = split_top_blocks(full_text)
+    # Repair run-together OCR numbers (e.g., "21" instead of "2.1") based on the set of detected TOPs.
+    rewrites = repair_run_together_subtops(blocks)
+    if rewrites:
+        for b in blocks:
+            b["top_number"] = rewrites.get(b["top_number"], b["top_number"])
 
     # Agenda title map (early list pages)
     agenda_titles: Dict[str, str] = {}
@@ -201,14 +301,14 @@ def parse_tops_from_corpus(corpus: Dict[str, Any]) -> List[ParsedTOP]:
             if t and not is_garbage_title(t):
                 agenda_titles.setdefault(b["top_number"], t)
 
-    # Deduplicate: keep the best *detail* block per TOP
+    # Deduplicate: keep the best block per TOP, strongly preferring "detail".
     best: Dict[str, Dict[str, Any]] = {}
     for b in blocks:
-        if classify_block_kind(b["text"], b["len"]) != "detail":
-            continue
+        kind = classify_block_kind(b["text"], b["len"])
         y, n, _ = parse_votes_strict(b["text"])
         explicit = detect_explicit_decision(b["text"])
         score = (
+            1 if kind == "detail" else 0,
             1 if (y is not None and n is not None) else 0,
             1 if explicit is not None else 0,
             b["len"],
