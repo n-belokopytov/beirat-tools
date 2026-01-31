@@ -52,7 +52,27 @@ class TestTopParser2021Regression(unittest.TestCase):
         self.assertIn("17.1", tops)
         self.assertNotIn("21", tops)
 
+    def test_cleans_noise_in_titles(self) -> None:
+        corpus = {
+            "source_path": "Protokoll Eigentümerversammlung vom 12.12.2024.pdf",
+            "pages": [
+                {
+                    "page_index": 0,
+                    "text": (
+                        "TOP 3 <<<PAGE:2>>> DSZ_ABC123 "
+                        "Beschlussfassung über den Wirtschaftsplan\n"
+                        "Ja-Stimmen: 10 Nein-Stimmen: 1 Enthaltungen: 0\n"
+                        "wird beschlossen\n"
+                    ),
+                }
+            ],
+        }
+
+        parsed = parse_tops_from_corpus(corpus)
+        self.assertEqual(1, len(parsed))
+        self.assertEqual("3", parsed[0].top_number)
+        self.assertEqual("Beschlussfassung über den Wirtschaftsplan", parsed[0].top_title)
+
 
 if __name__ == "__main__":
     unittest.main()
-
