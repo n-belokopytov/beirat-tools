@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from typing import Optional, List
 
 NOISE_LINE_PATTERNS = [
@@ -24,13 +25,19 @@ def normalize_text(text: str) -> str:
     Normalize extracted PDF text:
     - normalize newlines
     - de-hyphenate line breaks
+    - fix common umlaut OCR artifacts
     - remove common transport markers
     - collapse whitespace
     """
     if not text:
         return ""
     text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = unicodedata.normalize("NFC", text)
     text = re.sub(r"(\w)-\n(\w)", r"\1\2", text)  # Ver-\nwalter -> Verwalter
+    text = text.replace("a¨", "ä").replace("o¨", "ö").replace("u¨", "ü")
+    text = text.replace("A¨", "Ä").replace("O¨", "Ö").replace("U¨", "Ü")
+    text = text.replace("¨a", "ä").replace("¨o", "ö").replace("¨u", "ü")
+    text = text.replace("¨A", "Ä").replace("¨O", "Ö").replace("¨U", "Ü")
     text = NOISE_RE.sub("", text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{4,}", "\n\n\n", text)
@@ -44,6 +51,14 @@ def clean_title_text(text: str) -> str:
         return ""
     t = text.strip()
     t = TITLE_NOISE_RE.sub(" ", t)
+    # Drop tokens that are mostly repeated characters (e.g., "SEEEEEDEE")
+    tokens = [tok for tok in re.split(r"\s+", t) if tok]
+    cleaned_tokens: List[str] = []
+    for tok in tokens:
+        if len(tok) >= 6 and re.search(r"(.)\1{3,}", tok):
+            continue
+        cleaned_tokens.append(tok)
+    t = " ".join(cleaned_tokens)
     t = re.sub(r"\s{2,}", " ", t).strip()
     t = re.sub(r"^[\W_]+", "", t)
     t = re.sub(r"[\W_]+$", "", t)
