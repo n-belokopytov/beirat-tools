@@ -5,7 +5,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 
-from .text_utils import normalize_text, safe_int, clean_title_text
+from .text_utils import normalize_text, safe_int, clean_title_text, detect_title_orthography_issues
 
 TOP_HEADER_RE = re.compile(
     r"(?mi)^\s*(?:(?:seite|s\.)\s*\d+[\s\).:-]+|\d+[\s\).:-]+)?"
@@ -274,6 +274,7 @@ class ParsedTOP:
     source_file: str
     top_number: str
     top_title: Optional[str]
+    title_issues: List[str]
     approved: Optional[bool]
     explicit_decision: Optional[bool]
     votes_yes: Optional[int]
@@ -334,11 +335,14 @@ def parse_tops_from_corpus(corpus: Dict[str, Any]) -> List[ParsedTOP]:
         if is_garbage_title(title):
             title = agenda_titles.get(top_no) or None
 
+        title_issues = detect_title_orthography_issues(title or "")
+
         out.append(ParsedTOP(
             meeting_date=meeting_date,
             source_file=Path(corpus["source_path"]).name,
             top_number=top_no,
             top_title=title,
+            title_issues=title_issues,
             approved=approved,
             explicit_decision=explicit,
             votes_yes=y,

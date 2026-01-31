@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Optional, List
 
 NOISE_LINE_PATTERNS = [
     r"^DSZ_[A-Z].*$",
@@ -55,3 +55,40 @@ def safe_int(s: str) -> Optional[int]:
         return int(s.strip().replace(".", "").replace(" ", ""))
     except Exception:
         return None
+
+def detect_title_orthography_issues(text: str) -> List[str]:
+    """
+    Heuristic checks for OCR/copy-editing problems in short titles.
+    Returns a list of issue codes (empty if clean/unknown).
+    """
+    if not text:
+        return []
+    t = text.strip()
+    if not t:
+        return []
+
+    issues: List[str] = []
+
+    if re.search(r"[!?.,]{3,}", t):
+        issues.append("repeated_punctuation")
+    if re.search(r"(.)\1{3,}", t):
+        issues.append("repeated_characters")
+
+    tokens = re.split(r"\s+", t)
+    for tok in tokens:
+        if len(tok) >= 8 and tok.isupper():
+            issues.append("all_caps_long")
+            break
+
+    vowels = set("aeiouyäöüAEIOUYÄÖÜ")
+    for tok in tokens:
+        if len(tok) >= 6 and tok.isalpha() and not any(ch in vowels for ch in tok):
+            issues.append("no_vowel_token")
+            break
+
+    for tok in tokens:
+        if len(tok) >= 6 and re.search(r"[A-Za-zÄÖÜäöüß]", tok) and re.search(r"\d", tok):
+            issues.append("mixed_alnum_token")
+            break
+
+    return sorted(set(issues))
