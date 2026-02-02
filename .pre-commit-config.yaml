@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        files: ^weg-top-tracker-repo/.*\.py$

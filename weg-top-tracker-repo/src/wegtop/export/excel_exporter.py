@@ -60,7 +60,7 @@ class ExcelExporter:
 
         with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
             for y in years:
-                dfa = df_all[(df_all["year"] == y) & (df_all["approved"] == True)].copy()
+                dfa = df_all[(df_all["year"] == y) & (df_all["approved"].eq(True))].copy()
                 if not dfa.empty:
                     dfa = dfa.sort_values(
                         ["meeting_date", "top_number"],
