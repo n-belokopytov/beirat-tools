@@ -10,7 +10,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 
-from wegtop.top_parser import parse_tops_from_corpus  # noqa: E402
+from wegtop.top_parser import parse_tops_from_corpus  # noqa: E402  pylint: disable=wrong-import-position
 
 
 class TestTopParser2021Regression(unittest.TestCase):
