@@ -6,7 +6,7 @@ import pytest
 from wegtop.app import WEGTopApp
 from wegtop.export.excel_exporter import ExcelExporter
 from wegtop.models import IngestedPDF, PageText, ParsedTOP
-from wegtop.tracker import build_tracker_rows, export_excel, export_by_year
+from wegtop.tracker import build_tracker_rows
 
 
 class DummyPipeline:
@@ -97,35 +97,6 @@ def test_excel_exporter_writes_files(tmp_path):
     assert df_qa.loc[0, "file"] == "a.pdf"
 
 
-def test_export_wrappers_delegate(monkeypatch, tmp_path):
-    calls = []
-
-    class DummyExcelExporter:
-        def export(self, **kwargs):
-            calls.append(("export", kwargs))
-
-        def export_by_year(self, **kwargs):
-            calls.append(("export_by_year", kwargs))
-
-    monkeypatch.setattr("wegtop.tracker.ExcelExporter", lambda: DummyExcelExporter())
-    out_path = tmp_path / "tracker.xlsx"
-    by_year = tmp_path / "tracker_by_year.xlsx"
-
-    export_excel(
-        tracker_rows=[{"meeting_date": "2024-01-01", "top_number": "1"}],
-        all_tops_rows=[{"meeting_date": "2024-01-01", "top_number": "1", "approved": True}],
-        qa_rows=[{"file": "a.pdf"}],
-        out_path=out_path,
-    )
-    export_by_year(
-        all_tops_rows=[{"meeting_date": "2024-01-01", "top_number": "1", "approved": True}],
-        qa_rows=[{"file": "a.pdf"}],
-        out_path=by_year,
-    )
-
-    assert [c[0] for c in calls] == ["export", "export_by_year"]
-
-
 def test_app_process_pdfs_success(tmp_path):
     ingested = IngestedPDF(
         source_path="sample.pdf",
@@ -148,9 +119,7 @@ def test_app_process_pdfs_success(tmp_path):
             votes_abstain=0,
             page_start=0,
             page_end=0,
-            block_len=10,
             description="Full description text",
-            raw_excerpt="x",
         )
     ]
     exporter = DummyExporter()

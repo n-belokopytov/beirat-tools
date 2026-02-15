@@ -51,8 +51,6 @@ The codebase is split into layered modules to keep concerns isolated and testabl
 - `wegtop/app.py`: Application service wiring ingestion → parsing → export.
 - `wegtop/models.py`: Shared dataclasses for domain entities.
 
-Legacy entrypoints (`wegtop/pdf_ingest.py`, `wegtop/top_parser.py`, `wegtop/tracker.py`) remain as thin wrappers to preserve existing imports.
-
 ## Dependency management
 
 `pyproject.toml` is the source of truth. The `requirements*.txt` files are convenience wrappers that install the project and extras:

@@ -1,16 +1,6 @@
-import sys
-from pathlib import Path
 import unittest
 
-
-# Allow importing `wegtop` without installing the package.
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SRC = REPO_ROOT / "src"
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
-
-
-from wegtop.top_parser import parse_tops_from_corpus  # noqa: E402  pylint: disable=wrong-import-position
+from wegtop.parsing.regex_top_parser import parse_tops_from_corpus
 
 
 class TestTopParser2021Regression(unittest.TestCase):

@@ -1,6 +1,5 @@
 import pytest
 
-from wegtop import top_parser
 from wegtop.parsing.regex_top_parser import (
     normalize_top_number,
     repair_run_together_subtops,
@@ -96,5 +95,3 @@ def test_parse_tops_from_corpus_end_to_end():
     assert len(parsed) == 1
     assert parsed[0].top_number == "1"
     assert parsed[0].approved is True
-
-    assert top_parser.parse_tops_from_corpus is parse_tops_from_corpus

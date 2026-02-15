@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 
@@ -351,17 +350,11 @@ def parse_tops_from_corpus(corpus: Dict[str, Any]) -> List[ParsedTOP]:
             votes_abstain=a,
             page_start=b.get("page_start"),
             page_end=b.get("page_end"),
-            block_len=int(b.get("len") or 0),
             description=text,
-            raw_excerpt=text[:2000],
         ))
 
     out.sort(key=lambda r: (r.meeting_date or "9999-99-99", sort_key_top(r.top_number)))
     return out
-
-
-def parsed_to_dicts(rows: List[ParsedTOP]) -> List[Dict[str, Any]]:
-    return [asdict(r) for r in rows]
 
 
 class RegexTopParser:
