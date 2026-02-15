@@ -34,5 +34,4 @@ class ParsedTOP:
     votes_abstain: Optional[int]
     page_start: Optional[int]
     page_end: Optional[int]
-    block_len: int
-    raw_excerpt: str
+    description: str

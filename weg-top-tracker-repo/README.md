@@ -28,8 +28,17 @@ System deps for OCR:
 
 ## Run
 
+Activate the virtual environment first, then run:
+
 ```bash
-wegtop --in_dir ./pdfs --out_dir ./out --ocr
+source .venv/bin/activate
+wegtop --in_dir ./inputs --out_dir ./out
+```
+
+To enable OCR fallback for scanned PDFs:
+
+```bash
+wegtop --in_dir ./inputs --out_dir ./out --ocr
 ```
 
 ## Architecture
@@ -41,8 +50,6 @@ The codebase is split into layered modules to keep concerns isolated and testabl
 - `wegtop/export/`: Output writers (Excel exports).
 - `wegtop/app.py`: Application service wiring ingestion → parsing → export.
 - `wegtop/models.py`: Shared dataclasses for domain entities.
-
-Legacy entrypoints (`wegtop/pdf_ingest.py`, `wegtop/top_parser.py`, `wegtop/tracker.py`) remain as thin wrappers to preserve existing imports.
 
 ## Dependency management
 
