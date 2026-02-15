@@ -7,19 +7,23 @@ from ..models import PageText
 from ..text_utils import normalize_text
 from .base import TextExtractor
 
-
 DEFAULT_OCR_DPI = 200
 
 
 class OcrExtractor(TextExtractor):
-    def __init__(self, *, dpi: int = DEFAULT_OCR_DPI, lang: str = "deu", max_pages: Optional[int] = None) -> None:
+    def __init__(
+        self, *, dpi: int = DEFAULT_OCR_DPI, lang: str = "deu", max_pages: Optional[int] = None
+    ) -> None:
         self._dpi = dpi
         self._lang = lang
         self._max_pages = max_pages
 
     def extract(self, pdf_path: Path) -> List[PageText]:
         # Optional dependencies kept local to allow running without OCR extras.
-        from pdf2image import convert_from_path, pdfinfo_from_path  # pylint: disable=import-outside-toplevel
+        from pdf2image import (
+            convert_from_path,
+            pdfinfo_from_path,
+        )  # pylint: disable=import-outside-toplevel
         import pytesseract  # pylint: disable=import-outside-toplevel
 
         info = pdfinfo_from_path(str(pdf_path))

@@ -56,6 +56,7 @@ _GERMAN_OCR_FIX_RE = re.compile(
 
 def _apply_german_ocr_fixes(text: str) -> str:
     """Replace known OCR misreadings (ß→f, ü→ii) using a single pre-compiled regex."""
+
     def _replace(m: re.Match) -> str:
         word = m.group()
         if word in _GERMAN_OCR_FIXES:
@@ -69,6 +70,7 @@ def _apply_german_ocr_fixes(text: str) -> str:
                     return right[0].upper() + right[1:]
                 return right.lower()
         return word
+
     return _GERMAN_OCR_FIX_RE.sub(_replace, text)
 
 
@@ -96,6 +98,7 @@ def normalize_text(text: str) -> str:
     text = re.sub(r"\n{4,}", "\n\n\n", text)
     return text.strip()
 
+
 def clean_title_text(text: str) -> str:
     """
     Light cleanup for TOP titles: remove common OCR/scan artifacts.
@@ -118,11 +121,13 @@ def clean_title_text(text: str) -> str:
     t = re.sub(r"\s{2,}", " ", t).strip()
     return t
 
+
 def safe_int(s: str) -> Optional[int]:
     try:
         return int(s.strip().replace(".", "").replace(" ", ""))
     except Exception:
         return None
+
 
 def detect_title_orthography_issues(text: str) -> List[str]:
     """

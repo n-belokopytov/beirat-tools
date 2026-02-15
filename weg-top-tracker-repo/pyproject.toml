@@ -7,7 +7,7 @@ name = "weg-top-tracker"
 version = "0.1.0"
 description = "Parse WEG Eigentümerversammlung minutes PDFs, extract detail TOPs, and generate an execution tracker."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "Niki"}]
 dependencies = [

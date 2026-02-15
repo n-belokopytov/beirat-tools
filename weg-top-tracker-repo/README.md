@@ -10,7 +10,7 @@ Key hardening:
 
 ## Install
 
-Python 3.10+.
+Python 3.11+.
 
 ```bash
 pip install -e .
