@@ -30,7 +30,7 @@ def _find_tessdata_dir() -> Optional[Path]:
             text=True,
             timeout=10,
         )
-        for line in result.stderr.splitlines():
+        for line in (result.stdout + result.stderr).splitlines():
             if "tessdata" in line and '"' in line:
                 parts = line.split('"')
                 if len(parts) >= 2:
