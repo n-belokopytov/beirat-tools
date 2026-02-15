@@ -7,5 +7,4 @@ from ..models import PageText
 
 
 class TextExtractor(Protocol):
-    def extract(self, pdf_path: Path) -> List[PageText]:
-        ...
+    def extract(self, pdf_path: Path) -> List[PageText]: ...

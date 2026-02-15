@@ -20,6 +20,60 @@ TITLE_NOISE_PATTERNS = [
 
 TITLE_NOISE_RE = re.compile("|".join(f"(?:{p})" for p in TITLE_NOISE_PATTERNS), flags=re.IGNORECASE)
 
+# OCR with low DPI or English model interference misreads ß as f and ü as ii.
+# We fix only whole-word matches to avoid corrupting valid text.
+_GERMAN_OCR_FIXES = {
+    # ü misread as ii
+    "fiir": "für",
+    "fiihren": "führen",
+    "iiber": "über",
+    "Miill": "Müll",
+    "Tiir": "Tür",
+    "Riicklage": "Rücklage",
+    "Priifung": "Prüfung",
+    "Gebiihr": "Gebühr",
+    "Beschliisse": "Beschlüsse",
+    "zuriick": "zurück",
+    "Eigentiimer": "Eigentümer",
+    "Schliisselversicherung": "Schlüsselversicherung",
+    # ß misread as f
+    "daf": "daß",
+    "Maf": "Maß",
+    "Schlof": "Schloß",
+    "Fuf": "Fuß",
+    "Grof": "Groß",
+    "auferdem": "außerdem",
+    "Befchluf": "Beschluß",
+    "gemaf": "gemäß",
+    "Straf": "Straß",
+}
+
+_GERMAN_OCR_FIX_RE = re.compile(
+    r"\b(" + "|".join(re.escape(w) for w in _GERMAN_OCR_FIXES) + r")\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _apply_german_ocr_fixes(text: str) -> str:
+    """Replace known OCR misreadings (ß→f, ü→ii) using a single pre-compiled regex."""
+
+    def _replace(m: re.Match) -> str:
+        word = m.group()
+        if word in _GERMAN_OCR_FIXES:
+            return _GERMAN_OCR_FIXES[word]
+        lower = word.lower()
+        for wrong, right in _GERMAN_OCR_FIXES.items():
+            if wrong.lower() == lower:
+                if word.isupper():
+                    return right.upper()
+                if word[0].isupper():
+                    return right[0].upper() + right[1:]
+                return right.lower()
+        return word
+
+    return _GERMAN_OCR_FIX_RE.sub(_replace, text)
+
+
 def normalize_text(text: str) -> str:
     """
     Normalize extracted PDF text:
@@ -38,10 +92,12 @@ def normalize_text(text: str) -> str:
     text = text.replace("A¨", "Ä").replace("O¨", "Ö").replace("U¨", "Ü")
     text = text.replace("¨a", "ä").replace("¨o", "ö").replace("¨u", "ü")
     text = text.replace("¨A", "Ä").replace("¨O", "Ö").replace("¨U", "Ü")
+    text = _apply_german_ocr_fixes(text)
     text = NOISE_RE.sub("", text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{4,}", "\n\n\n", text)
     return text.strip()
+
 
 def clean_title_text(text: str) -> str:
     """
@@ -65,11 +121,13 @@ def clean_title_text(text: str) -> str:
     t = re.sub(r"\s{2,}", " ", t).strip()
     return t
 
+
 def safe_int(s: str) -> Optional[int]:
     try:
         return int(s.strip().replace(".", "").replace(" ", ""))
     except Exception:
         return None
+
 
 def detect_title_orthography_issues(text: str) -> List[str]:
     """

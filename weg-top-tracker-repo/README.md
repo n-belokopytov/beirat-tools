@@ -10,7 +10,7 @@ Key hardening:
 
 ## Install
 
-Python 3.10+.
+Python 3.11+.
 
 ```bash
 pip install -e .
@@ -40,6 +40,8 @@ To enable OCR fallback for scanned PDFs:
 ```bash
 wegtop --in_dir ./inputs --out_dir ./out --ocr
 ```
+
+OCR defaults to German-only Tesseract (`deu`) for reliable ß/ü/ä/ö recognition. Default render DPI is 200; use `--ocr_dpi 300` for best quality on poor scans. Common misreadings (ß→f, ü→ii) are corrected in post-processing where safe.
 
 ## Architecture
 

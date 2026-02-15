@@ -15,9 +15,18 @@ TOP_HEADER_RE = re.compile(
 PAGE_MARKER_RE = re.compile(r"<<<PAGE:(\d+)>>>")
 
 GARBAGE_TITLE_TOKENS = [
-    "gez.", "seite ", "dsz_", "versammlungsleiter", "wohnungseigentümer",
-    "verwaltungsbeiratsvorsitzender", "p60||", "clwti", "bmp", "altmp",
-    "<<<page", "protokollabschrift der",
+    "gez.",
+    "seite ",
+    "dsz_",
+    "versammlungsleiter",
+    "wohnungseigentümer",
+    "verwaltungsbeiratsvorsitzender",
+    "p60||",
+    "clwti",
+    "bmp",
+    "altmp",
+    "<<<page",
+    "protokollabschrift der",
 ]
 
 
@@ -149,15 +158,17 @@ def split_top_blocks(full_text: str) -> List[Dict[str, Any]]:
         start = m.start()
         end = ms[i + 1].start() if i + 1 < len(ms) else len(full_text)
         block = full_text[start:end].strip()
-        blocks.append({
-            "top_number": normalize_top_number(m.group(1)),
-            "start": start,
-            "end": end,
-            "page_start": _page_at(markers, start),
-            "page_end": _page_at(markers, end - 1),
-            "len": len(block),
-            "text": block,
-        })
+        blocks.append(
+            {
+                "top_number": normalize_top_number(m.group(1)),
+                "start": start,
+                "end": end,
+                "page_start": _page_at(markers, start),
+                "page_end": _page_at(markers, end - 1),
+                "len": len(block),
+                "text": block,
+            }
+        )
     return blocks
 
 
@@ -196,7 +207,14 @@ def extract_title(block_text: str) -> Optional[str]:
     if not lines:
         return None
 
-    stop_markers = ("abstimmungsergebnis", "ergebnis", "bemerkung", "sachverhalt", "begründung", "stimmberechtigt")
+    stop_markers = (
+        "abstimmungsergebnis",
+        "ergebnis",
+        "bemerkung",
+        "sachverhalt",
+        "begründung",
+        "stimmberechtigt",
+    )
     title_lines: List[str] = []
     for ln in lines[:12]:
         if ln.lower().startswith(stop_markers):
@@ -236,21 +254,56 @@ def parse_votes_strict(block: str) -> Tuple[Optional[int], Optional[int], Option
 
 def detect_explicit_decision(block: str) -> Optional[bool]:
     b = block.lower()
-    if any(x in b for x in ["abgelehnt", "nicht angenommen", "nicht beschlossen", "kein beschluss", "zurückgestellt",
-                            "vertagt", "ohne beschluss", "keine beschlussfassung", "keine beschluss", "beschlussfassung entfällt"]):
+    if any(
+        x in b
+        for x in [
+            "abgelehnt",
+            "nicht angenommen",
+            "nicht beschlossen",
+            "kein beschluss",
+            "zurückgestellt",
+            "vertagt",
+            "ohne beschluss",
+            "keine beschlussfassung",
+            "keine beschluss",
+            "beschlussfassung entfällt",
+        ]
+    ):
         return False
-    if any(x in b for x in ["wird angenommen", "angenommen", "beschließt", "wird beschlossen",
-                            "mehrheitlich beschlossen", "beschluss gefasst"]):
+    if any(
+        x in b
+        for x in [
+            "wird angenommen",
+            "angenommen",
+            "beschließt",
+            "wird beschlossen",
+            "mehrheitlich beschlossen",
+            "beschluss gefasst",
+        ]
+    ):
         return True
     return None
 
 
 def mentions_special_quorum(block: str) -> bool:
     b = block.lower()
-    return any(k in b for k in ["einstimmigkeit", "quorum", "2/3", "zwei drittel", "3/4", "drei viertel", "qualifizierte mehrheit"])
+    return any(
+        k in b
+        for k in [
+            "einstimmigkeit",
+            "quorum",
+            "2/3",
+            "zwei drittel",
+            "3/4",
+            "drei viertel",
+            "qualifizierte mehrheit",
+        ]
+    )
 
 
-def infer_approved(explicit: Optional[bool], yes: Optional[int], no: Optional[int], block: str) -> Optional[bool]:
+def infer_approved(
+    explicit: Optional[bool], yes: Optional[int], no: Optional[int], block: str
+) -> Optional[bool]:
     if explicit is not None:
         return explicit
     if mentions_special_quorum(block):
@@ -263,7 +316,12 @@ def infer_approved(explicit: Optional[bool], yes: Optional[int], no: Optional[in
 def classify_block_kind(block_text: str, length: int) -> str:
     y, n, _ = parse_votes_strict(block_text)
     explicit = detect_explicit_decision(block_text)
-    if (y is not None and n is not None) or explicit is not None or length >= 500 or ("verkündet das beschlussergebnis" in block_text.lower()):
+    if (
+        (y is not None and n is not None)
+        or explicit is not None
+        or length >= 500
+        or ("verkündet das beschlussergebnis" in block_text.lower())
+    ):
         return "detail"
     return "agenda_or_header"
 
@@ -337,21 +395,23 @@ def parse_tops_from_corpus(corpus: Dict[str, Any]) -> List[ParsedTOP]:
 
         title_issues = detect_title_orthography_issues(title or "")
 
-        out.append(ParsedTOP(
-            meeting_date=meeting_date,
-            source_file=Path(corpus["source_path"]).name,
-            top_number=top_no,
-            top_title=title,
-            title_issues=title_issues,
-            approved=approved,
-            explicit_decision=explicit,
-            votes_yes=y,
-            votes_no=n,
-            votes_abstain=a,
-            page_start=b.get("page_start"),
-            page_end=b.get("page_end"),
-            description=text,
-        ))
+        out.append(
+            ParsedTOP(
+                meeting_date=meeting_date,
+                source_file=Path(corpus["source_path"]).name,
+                top_number=top_no,
+                top_title=title,
+                title_issues=title_issues,
+                approved=approved,
+                explicit_decision=explicit,
+                votes_yes=y,
+                votes_no=n,
+                votes_abstain=a,
+                page_start=b.get("page_start"),
+                page_end=b.get("page_end"),
+                description=text,
+            )
+        )
 
     out.sort(key=lambda r: (r.meeting_date or "9999-99-99", sort_key_top(r.top_number)))
     return out

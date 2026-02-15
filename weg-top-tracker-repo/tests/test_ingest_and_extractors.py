@@ -124,7 +124,7 @@ def test_ocr_extractor_limits_pages(monkeypatch):
         pdfinfo_from_path=pdfinfo_from_path,
     )
     pytesseract = types.SimpleNamespace(
-        image_to_string=lambda img, lang: f"text-{img}",
+        image_to_string=lambda img, lang=None: f"text-{img}",
     )
 
     monkeypatch.setitem(sys.modules, "pdf2image", pdf2image)

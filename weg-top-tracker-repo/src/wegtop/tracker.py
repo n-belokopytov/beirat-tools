@@ -8,10 +8,12 @@ def build_tracker_rows(parsed_tops: Iterable[Dict[str, Any]]) -> List[Dict[str, 
     for rec in parsed_tops:
         if rec.get("approved") is not True:
             continue
-        rows.append({
-            "meeting_date": rec.get("meeting_date"),
-            "top_number": rec.get("top_number"),
-            "top_title": rec.get("top_title"),
-            "description": rec.get("description", ""),
-        })
+        rows.append(
+            {
+                "meeting_date": rec.get("meeting_date"),
+                "top_number": rec.get("top_number"),
+                "top_title": rec.get("top_title"),
+                "description": rec.get("description", ""),
+            }
+        )
     return rows
