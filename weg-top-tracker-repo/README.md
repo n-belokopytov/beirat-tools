@@ -28,8 +28,17 @@ System deps for OCR:
 
 ## Run
 
+Activate the virtual environment first, then run:
+
 ```bash
-wegtop --in_dir ./pdfs --out_dir ./out --ocr
+source .venv/bin/activate
+wegtop --in_dir ./inputs --out_dir ./out
+```
+
+To enable OCR fallback for scanned PDFs:
+
+```bash
+wegtop --in_dir ./inputs --out_dir ./out --ocr
 ```
 
 ## Architecture

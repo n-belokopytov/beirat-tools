@@ -5,17 +5,6 @@ from typing import Dict, List, Any, Iterable
 
 from .export.excel_exporter import ExcelExporter
 
-GERMAN_STATUSES = [
-    "Neu / offen",
-    "In Prüfung",
-    "Beauftragt",
-    "In Umsetzung",
-    "Wartet auf Verwalter",
-    "Wartet auf Dienstleister",
-    "Erledigt",
-    "Blockiert",
-]
-
 def build_tracker_rows(parsed_tops: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     for rec in parsed_tops:
@@ -25,19 +14,7 @@ def build_tracker_rows(parsed_tops: Iterable[Dict[str, Any]]) -> List[Dict[str, 
             "meeting_date": rec.get("meeting_date"),
             "top_number": rec.get("top_number"),
             "top_title": rec.get("top_title"),
-            "votes_yes": rec.get("votes_yes"),
-            "votes_no": rec.get("votes_no"),
-            "votes_abstain": rec.get("votes_abstain"),
-            "source_file": rec.get("source_file"),
-            "page_start": rec.get("page_start"),
-            "page_end": rec.get("page_end"),
-            "owner": "Verwalter",
-            "status": "Neu / offen",
-            "last_beirat_action": "",
-            "next_steps": "",
-            "due_date": "",
-            "risk_flag": "",
-            "notes": "",
+            "description": rec.get("description", rec.get("raw_excerpt", "")),
         })
     return rows
 

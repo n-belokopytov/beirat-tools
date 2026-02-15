@@ -52,11 +52,12 @@ def test_excel_exporter_writes_files(tmp_path):
     out_path = tmp_path / "tracker.xlsx"
     by_year = tmp_path / "tracker_by_year.xlsx"
 
-    tracker_rows = [{"meeting_date": "2024-01-01", "top_number": "1", "top_title": "Test"}]
+    tracker_rows = [{"meeting_date": "2024-01-01", "top_number": "1", "top_title": "Test", "description": "Full text"}]
     all_rows = [{
         "meeting_date": "2024-01-01",
         "top_number": "1",
         "top_title": "Test",
+        "description": "Full text",
         "approved": True,
         "votes_yes": 1,
         "votes_no": 0,
@@ -148,6 +149,7 @@ def test_app_process_pdfs_success(tmp_path):
             page_start=0,
             page_end=0,
             block_len=10,
+            description="Full description text",
             raw_excerpt="x",
         )
     ]

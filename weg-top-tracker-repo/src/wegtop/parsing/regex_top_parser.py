@@ -352,6 +352,7 @@ def parse_tops_from_corpus(corpus: Dict[str, Any]) -> List[ParsedTOP]:
             page_start=b.get("page_start"),
             page_end=b.get("page_end"),
             block_len=int(b.get("len") or 0),
+            description=text,
             raw_excerpt=text[:2000],
         ))
 
