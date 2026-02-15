@@ -50,17 +50,19 @@ class WEGTopApp:
                 parsed_dicts = [asdict(p) for p in parsed]
                 all_rows.extend(parsed_dicts)
 
-                qa_rows.append({
-                    "file": pdf.name,
-                    "meeting_date": parsed[0].meeting_date if parsed else None,
-                    "tops_detail": len(parsed_dicts),
-                    "approved": sum(1 for r in parsed_dicts if r.get("approved") is True),
-                    "rejected": sum(1 for r in parsed_dicts if r.get("approved") is False),
-                    "unknown": sum(1 for r in parsed_dicts if r.get("approved") is None),
-                    "used_ocr": ing.used_ocr,
-                    "used_layout": ing.used_layout,
-                    "avg_chars_per_page": round(ing.avg_chars_per_page, 1),
-                })
+                qa_rows.append(
+                    {
+                        "file": pdf.name,
+                        "meeting_date": parsed[0].meeting_date if parsed else None,
+                        "tops_detail": len(parsed_dicts),
+                        "approved": sum(1 for r in parsed_dicts if r.get("approved") is True),
+                        "rejected": sum(1 for r in parsed_dicts if r.get("approved") is False),
+                        "unknown": sum(1 for r in parsed_dicts if r.get("approved") is None),
+                        "used_ocr": ing.used_ocr,
+                        "used_layout": ing.used_layout,
+                        "avg_chars_per_page": round(ing.avg_chars_per_page, 1),
+                    }
+                )
 
                 print(
                     f"[OK] {pdf.name}: detail_TOPs={len(parsed_dicts)} "

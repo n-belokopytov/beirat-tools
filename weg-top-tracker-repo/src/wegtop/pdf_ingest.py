@@ -14,7 +14,10 @@ def save_corpus_json(ingested: IngestedPDF, out_path: Path) -> None:
         "used_layout": ingested.used_layout,
         "used_ocr": ingested.used_ocr,
         "avg_chars_per_page": ingested.avg_chars_per_page,
-        "pages": [{"page_index": p.page_index, "char_count": p.char_count, "text": p.text} for p in ingested.pages],
+        "pages": [
+            {"page_index": p.page_index, "char_count": p.char_count, "text": p.text}
+            for p in ingested.pages
+        ],
     }
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -25,7 +28,10 @@ def ingested_to_corpus(ingested: IngestedPDF) -> Dict[str, Any]:
         "used_layout": ingested.used_layout,
         "used_ocr": ingested.used_ocr,
         "avg_chars_per_page": ingested.avg_chars_per_page,
-        "pages": [{"page_index": p.page_index, "char_count": p.char_count, "text": p.text} for p in ingested.pages],
+        "pages": [
+            {"page_index": p.page_index, "char_count": p.char_count, "text": p.text}
+            for p in ingested.pages
+        ],
     }
 
 
