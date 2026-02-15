@@ -41,6 +41,8 @@ To enable OCR fallback for scanned PDFs:
 wegtop --in_dir ./inputs --out_dir ./out --ocr
 ```
 
+OCR defaults to German-only Tesseract (`deu`) for reliable ß/ü/ä/ö recognition. Default render DPI is 200; use `--ocr_dpi 300` for best quality on poor scans. Common misreadings (ß→f, ü→ii) are corrected in post-processing where safe.
+
 ## Architecture
 
 The codebase is split into layered modules to keep concerns isolated and testable:

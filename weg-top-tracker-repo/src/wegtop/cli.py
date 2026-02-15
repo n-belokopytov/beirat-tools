@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .app import WEGTopApp
 from .export.excel_exporter import ExcelExporter
-from .ingest.ocr_extractor import OcrExtractor
+from .ingest.ocr_extractor import DEFAULT_OCR_DPI, OcrExtractor
 from .ingest.pdfplumber_extractor import PdfPlumberExtractor
 from .ingest.pipeline import IngestPipeline
 from .parsing.regex_top_parser import RegexTopParser
@@ -17,7 +17,7 @@ def main() -> None:
     ap.add_argument("--out_dir", default="out", help="Output directory")
     ap.add_argument("--ocr", action="store_true", help="Enable OCR fallback for low-text PDFs (optional)")
     ap.add_argument("--min_avg_chars", type=int, default=250, help="OCR/layout trigger threshold")
-    ap.add_argument("--ocr_dpi", type=int, default=140, help="OCR render DPI")
+    ap.add_argument("--ocr_dpi", type=int, default=DEFAULT_OCR_DPI, help="OCR render DPI (higher improves ß/ü recognition)")
     ap.add_argument("--max_ocr_pages", type=int, default=None, help="Limit OCR pages for large PDFs")
     ap.add_argument("--fail_fast", action="store_true", help="Stop on first PDF error")
     args = ap.parse_args()

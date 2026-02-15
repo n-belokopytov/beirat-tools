@@ -8,8 +8,11 @@ from ..text_utils import normalize_text
 from .base import TextExtractor
 
 
+DEFAULT_OCR_DPI = 200
+
+
 class OcrExtractor(TextExtractor):
-    def __init__(self, *, dpi: int = 140, lang: str = "deu+eng", max_pages: Optional[int] = None) -> None:
+    def __init__(self, *, dpi: int = DEFAULT_OCR_DPI, lang: str = "deu", max_pages: Optional[int] = None) -> None:
         self._dpi = dpi
         self._lang = lang
         self._max_pages = max_pages

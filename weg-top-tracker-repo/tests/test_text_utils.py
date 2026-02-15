@@ -6,6 +6,14 @@ def test_normalize_text_repairs_hyphenation_and_umlauts():
     assert normalize_text(raw) == "Verwalter Änderung"
 
 
+def test_normalize_text_fixes_german_ocr_ii_and_eszett():
+    """OCR often misreads ü as ii and ß as f; we fix at word boundaries."""
+    assert normalize_text("fiir die Eigentiimer") == "für die Eigentümer"
+    assert normalize_text("Maf und Schlof") == "Maß und Schloß"
+    assert normalize_text("FIIR") == "FÜR"  # case-insensitive
+    assert normalize_text("Ministerium und Basis") == "Ministerium und Basis"  # unchanged
+
+
 def test_clean_title_text_removes_noise_and_repeats():
     raw = "<<<PAGE:2>>> SEEEEEDEE Beschlussfassung"
     cleaned = clean_title_text(raw)
