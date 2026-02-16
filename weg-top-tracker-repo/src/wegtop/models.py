@@ -35,3 +35,18 @@ class ParsedTOP:
     page_start: Optional[int]
     page_end: Optional[int]
     description: str
+
+
+@dataclass
+class CategorizedTOP:
+    meeting_date: Optional[str]
+    top_number: str
+    top_title: Optional[str]
+    description: str
+    owner: str
+    owner_reasoning: str
+    cost_allocation: str
+    cost_reasoning: str
+    complexity: str
+    complexity_reasoning: str
+    importance_score: int
