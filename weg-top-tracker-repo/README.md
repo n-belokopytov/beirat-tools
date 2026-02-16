@@ -16,10 +16,11 @@ Python 3.11+.
 pip install -e .
 ```
 
-Optional OCR (for scanned PDFs like older minutes):
+Optional extras:
 
 ```bash
-pip install -e ".[ocr]"
+pip install -e ".[ocr]"   # OCR fallback for scanned PDFs
+pip install -e ".[llm]"   # LLM-based TOP categorization
 ```
 
 System deps for OCR:
@@ -30,18 +31,35 @@ System deps for OCR:
 
 Activate the virtual environment first, then run:
 
+### Parse meeting minutes
+
 ```bash
 source .venv/bin/activate
-wegtop --in_dir ./inputs --out_dir ./out
+wegtop parse --in_dir ./inputs --out_dir ./out
 ```
 
 To enable OCR fallback for scanned PDFs:
 
 ```bash
-wegtop --in_dir ./inputs --out_dir ./out --ocr
+wegtop parse --in_dir ./inputs --out_dir ./out --ocr
 ```
 
 OCR defaults to German-only Tesseract (`deu`) for reliable ß/ü/ä/ö recognition. Default render DPI is 200; use `--ocr_dpi 300` for best quality on poor scans. Common misreadings (ß→f, ü→ii) are corrected in post-processing where safe.
+
+### Categorize approved TOPs
+
+Classify each approved TOP by owner, cost, and complexity using an LLM, then calculate a multiplicative importance score (range 1–180):
+
+```bash
+export OPENAI_API_KEY="sk-..."
+wegtop categorize --input out/approved_TOPs_tracker.xlsx
+```
+
+Output is written to `out/categorized_TOPs.xlsx` with a `Categorized_TOPs` sheet sorted by importance score descending. Options:
+
+- `--output <path>` — custom output file path
+- `--model <name>` — OpenAI model (default: `gpt-5.2`)
+- `--fail_fast` — stop on first LLM error instead of skipping
 
 ## Architecture
 
@@ -50,6 +68,7 @@ The codebase is split into layered modules to keep concerns isolated and testabl
 - `wegtop/ingest/`: Extractors and ingestion pipeline (pdfplumber/OCR strategies).
 - `wegtop/parsing/`: TOP parsing logic (default regex-based parser).
 - `wegtop/export/`: Output writers (Excel exports).
+- `wegtop/categorizer.py`: LLM-based TOP categorization and scoring.
 - `wegtop/app.py`: Application service wiring ingestion → parsing → export.
 - `wegtop/models.py`: Shared dataclasses for domain entities.
 

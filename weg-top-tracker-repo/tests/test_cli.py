@@ -1,16 +1,60 @@
 import sys
+import types
 
 import pytest
 
 from wegtop import cli
 
 
-def test_cli_exits_on_empty_dir(tmp_path, monkeypatch):
+def _stub_openai(monkeypatch):
+    """Ensure ``import openai`` succeeds even when the package is not installed."""
+    if "openai" not in sys.modules:
+        fake = types.ModuleType("openai")
+        fake.OpenAI = lambda *a, **kw: None  # type: ignore[attr-defined]
+        monkeypatch.setitem(sys.modules, "openai", fake)
+
+
+def test_cli_parse_exits_on_empty_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(
         sys,
         "argv",
-        ["wegtop", "--in_dir", str(tmp_path), "--out_dir", str(tmp_path / "out")],
+        ["wegtop", "parse", "--in_dir", str(tmp_path), "--out_dir", str(tmp_path / "out")],
     )
     with pytest.raises(SystemExit) as exc:
         cli.main()
     assert "No PDFs found in" in str(exc.value)
+
+
+def test_cli_no_subcommand_exits(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["wegtop"])
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 1
+
+
+def test_cli_categorize_exits_on_missing_input(tmp_path, monkeypatch):
+    _stub_openai(monkeypatch)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["wegtop", "categorize", "--input", str(tmp_path / "nonexistent.xlsx")],
+    )
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert "Input file not found" in str(exc.value)
+
+
+def test_cli_categorize_exits_on_missing_api_key(tmp_path, monkeypatch):
+    _stub_openai(monkeypatch)
+    input_file = tmp_path / "tracker.xlsx"
+    input_file.touch()
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["wegtop", "categorize", "--input", str(input_file)],
+    )
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert "OPENAI_API_KEY" in str(exc.value)

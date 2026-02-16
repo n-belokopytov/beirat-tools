@@ -10,6 +10,19 @@ import pandas as pd
 
 class ExcelExporter:
     _TOP_COLS = ["meeting_date", "top_number", "top_title", "description"]
+    _CATEGORIZED_COLS = [
+        "meeting_date",
+        "top_number",
+        "top_title",
+        "description",
+        "owner",
+        "cost_allocation",
+        "complexity",
+        "importance_score",
+        "owner_reasoning",
+        "cost_reasoning",
+        "complexity_reasoning",
+    ]
 
     def export(
         self,
@@ -31,6 +44,20 @@ class ExcelExporter:
             df_tracker[cols].to_excel(writer, sheet_name="Approved_TOPs", index=False)
             df_qa.to_excel(writer, sheet_name="QA_Summary", index=False)
             df_all[cols_all].to_excel(writer, sheet_name="All_TOPs_Detail", index=False)
+
+    def export_categorized(
+        self,
+        *,
+        rows: List[Dict[str, Any]],
+        out_path: Path,
+    ) -> None:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        df = pd.DataFrame(rows)
+        if not df.empty:
+            df = df.sort_values("importance_score", ascending=False)
+        cols = [c for c in self._CATEGORIZED_COLS if c in df.columns]
+        with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
+            df[cols].to_excel(writer, sheet_name="Categorized_TOPs", index=False)
 
     def export_by_year(
         self,
