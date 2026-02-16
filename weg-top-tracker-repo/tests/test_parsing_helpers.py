@@ -1,5 +1,3 @@
-import pytest
-
 from wegtop.parsing.regex_top_parser import (
     normalize_top_number,
     repair_run_together_subtops,
