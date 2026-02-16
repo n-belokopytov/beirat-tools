@@ -14,6 +14,17 @@ def test_normalize_text_fixes_german_ocr_ii_and_eszett():
     assert normalize_text("Ministerium und Basis") == "Ministerium und Basis"  # unchanged
 
 
+def test_normalize_text_strips_ocr_table_borders_from_top_headers():
+    """pdfplumber/OCR reads table borders as |, [, ], (, ) before TOP headers."""
+    assert "TOP 1.2 Feststellung" in normalize_text("| TOP 1.2 Feststellung")
+    assert "TOP 1.5 Beschluss" in normalize_text("|LTOP 1.5 Beschluss")
+    assert "TOP 1 Förmlichkeiten" in normalize_text("[TOP 1 Förmlichkeiten )")
+    # Run-together TOP+digit gets a space inserted
+    assert "TOP 2 Bericht" in normalize_text("|TOP2 Bericht")
+    # Normal TOP lines are unchanged
+    assert "TOP 4 Wirtschaftsplan" in normalize_text("TOP 4 Wirtschaftsplan")
+
+
 def test_clean_title_text_removes_noise_and_repeats():
     raw = "<<<PAGE:2>>> SEEEEEDEE Beschlussfassung"
     cleaned = clean_title_text(raw)

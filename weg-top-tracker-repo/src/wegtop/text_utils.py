@@ -93,6 +93,15 @@ def normalize_text(text: str) -> str:
     text = text.replace("¨a", "ä").replace("¨o", "ö").replace("¨u", "ü")
     text = text.replace("¨A", "Ä").replace("¨O", "Ö").replace("¨U", "Ü")
     text = _apply_german_ocr_fixes(text)
+    # Strip table-border artifacts (|, [, ], (, )) that pdfplumber or OCR
+    # produce from decorative lines in PDFs, and fix LTOP → TOP.
+    text = re.sub(
+        r"(?m)^[|\[\]() \t]*L?((?:T\s*O\s*P|TOP|Tagesordnungspunkt)(?=[\s\d]))",
+        r"\1",
+        text,
+    )
+    # Ensure space between TOP keyword and digit (extraction sometimes merges them)
+    text = re.sub(r"(?m)^(T\s*O\s*P|TOP|Tagesordnungspunkt)(\d)", r"\1 \2", text)
     text = NOISE_RE.sub("", text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{4,}", "\n\n\n", text)
