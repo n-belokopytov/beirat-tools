@@ -129,6 +129,126 @@ def safe_int(s: str) -> Optional[int]:
         return None
 
 
+def clean_description(text: str) -> str:
+    """
+    Strip voting metadata, page infrastructure, signatures, and decision
+    announcements from a TOP description block, keeping only substantive content.
+    """
+    if not text:
+        return ""
+
+    # TOP header prefix ("TOP 4\n" or "TOP 17.1 ")
+    text = re.sub(
+        r"^\s*(?:T\s*O\s*P|TOP|Tagesordnungspunkt)\s+" r"\d+(?:[.,/]\s*\d+)?[a-z]?\s*",
+        "",
+        text,
+        count=1,
+    )
+
+    # Page markers: <<<PAGE:N>>>
+    text = re.sub(r"<<<PAGE:\d+>>>", "", text)
+
+    # Page numbers
+    text = re.sub(r"Seite\s+\d+\s+von\s+\d+", "", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"Seite\s+\d+\s+zum\s+Versammlungsprotokoll\s+vom\s+\d{2}\.\d{2}\.\d{4}",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    # Protocol page headers (3-line block repeated on each page)
+    text = re.sub(
+        r"Protokollabschrift\s*\n"
+        r"der\s+\d+\.\s*\([^)]*\)\s*Eigent[üu]merversammlung\s+vom\s+"
+        r"\d{2}\.\d{2}\.\d{4}\s*\n"
+        r"WEG\b[^\n]*",
+        "",
+        text,
+    )
+
+    # Signature lines ("gez. Name1 gez. Name2 ...")
+    text = re.sub(r"(?m)^gez\..*$", "", text)
+
+    # Role identifier lines
+    text = re.sub(
+        r"(?m)^Verwaltungsbeirat(?:svorsitzender)?\s+"
+        r"Versammlungsleiter(?:/in)?\s+Wohnungseigent[üu]mer\s*$",
+        "",
+        text,
+    )
+
+    # Vote eligibility metadata
+    text = re.sub(r"(?m)^Stimmberechtigt\s+sind:.*$", "", text)
+    text = re.sub(
+        r"Seit\s+Beginn\s+der\s+Versammlung\s+haben\s+sich\s+die\s+Stimmrechte\s+"
+        r"wie\s+folgt\s+ge[äa]ndert:\s*\n"
+        r"Zugang:\s*[\d.,]+\s*Stimmen;\s*Abgang:\s*[\d.,]+\s*Stimmen\.",
+        "",
+        text,
+    )
+    text = re.sub(
+        r"(?m)^Bei\s+Anwesenheit\s+von\s+[\d.,]+\s+Stimmrechten\s+wird\s+"
+        r"[üu]ber\s+folgenden\s+Antrag\s+abgestimmt:?\s*$",
+        "",
+        text,
+    )
+
+    # Vote results (new format: "Für diesen Antrag stimmen X (Ja - Stimmen)")
+    text = re.sub(
+        r"(?m)^F[üu]r\s+diesen\s+Antrag\s+stimmen\s+[\d.,]+\s+" r"\(Ja\s*-?\s*Stimmen\)\s*$",
+        "",
+        text,
+    )
+    text = re.sub(
+        r"(?m)^Gegen\s+diesen\s+Antrag\s+stimmen\s+[\d.,]+\s+" r"\(Nein\s*-?\s*Stimmen\)\s*$",
+        "",
+        text,
+    )
+    text = re.sub(
+        r"(?m)^Der\s+Stimme\s+enthalten\s+sich\s+[\d.,]+\s+\(Enthaltungen\)\s*$",
+        "",
+        text,
+    )
+
+    # Vote results (old format: "X Ja-Stimmen X Nein-Stimmen X Enthaltungen")
+    text = re.sub(r"(?m)^Abstimmungsergebnis:\s*$", "", text)
+    text = re.sub(
+        r"(?m)^[\d.,]+\s+Ja-Stimmen\s+[\d.,]+\s+Nein-Stimmen\s+" r"[\d.,]+\s+Enthaltungen\s*$",
+        "",
+        text,
+    )
+
+    # Decision announcements
+    text = re.sub(
+        r"(?m)^Damit\s+wird\s+der\s+Antrag\s+"
+        r"(?:mehrheitlich\s+)?(?:nicht\s+)?angenommen\.?\s*$",
+        "",
+        text,
+    )
+    text = re.sub(
+        r"(?m)^Der\s+Beschluss\s+wird\s+(?:nicht\s+)?angenommen\b.*$",
+        "",
+        text,
+    )
+    text = re.sub(
+        r"(?m)^Der\s+Versammlungsleiter\s+verk[üu]ndet\s+" r"das\s+Beschlussergebnis\.?\s*$",
+        "",
+        text,
+    )
+
+    # Vote circle restrictions
+    text = re.sub(
+        r"(?m)^nur\s+f[üu]r\s+Eigent[üu]mer\s+des\s+Abrechnungskreises.*$",
+        "",
+        text,
+    )
+
+    # Collapse excess blank lines and trim
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def detect_title_orthography_issues(text: str) -> List[str]:
     """
     Heuristic checks for OCR/copy-editing problems in short titles.
