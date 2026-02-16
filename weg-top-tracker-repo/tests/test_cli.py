@@ -1,8 +1,17 @@
 import sys
+import types
 
 import pytest
 
 from wegtop import cli
+
+
+def _stub_openai(monkeypatch):
+    """Ensure ``import openai`` succeeds even when the package is not installed."""
+    if "openai" not in sys.modules:
+        fake = types.ModuleType("openai")
+        fake.OpenAI = lambda *a, **kw: None  # type: ignore[attr-defined]
+        monkeypatch.setitem(sys.modules, "openai", fake)
 
 
 def test_cli_parse_exits_on_empty_dir(tmp_path, monkeypatch):
@@ -24,6 +33,7 @@ def test_cli_no_subcommand_exits(monkeypatch):
 
 
 def test_cli_categorize_exits_on_missing_input(tmp_path, monkeypatch):
+    _stub_openai(monkeypatch)
     monkeypatch.setattr(
         sys,
         "argv",
@@ -36,6 +46,7 @@ def test_cli_categorize_exits_on_missing_input(tmp_path, monkeypatch):
 
 
 def test_cli_categorize_exits_on_missing_api_key(tmp_path, monkeypatch):
+    _stub_openai(monkeypatch)
     input_file = tmp_path / "tracker.xlsx"
     input_file.touch()
     monkeypatch.setattr(
