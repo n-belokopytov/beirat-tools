@@ -139,8 +139,7 @@ def clean_description(text: str) -> str:
 
     # TOP header prefix ("TOP 4\n" or "TOP 17.1 ")
     text = re.sub(
-        r"^\s*(?:T\s*O\s*P|TOP|Tagesordnungspunkt)\s+"
-        r"\d+(?:[.,/]\s*\d+)?[a-z]?\s*",
+        r"^\s*(?:T\s*O\s*P|TOP|Tagesordnungspunkt)\s+" r"\d+(?:[.,/]\s*\d+)?[a-z]?\s*",
         "",
         text,
         count=1,
@@ -197,14 +196,12 @@ def clean_description(text: str) -> str:
 
     # Vote results (new format: "Für diesen Antrag stimmen X (Ja - Stimmen)")
     text = re.sub(
-        r"(?m)^F[üu]r\s+diesen\s+Antrag\s+stimmen\s+[\d.,]+\s+"
-        r"\(Ja\s*-?\s*Stimmen\)\s*$",
+        r"(?m)^F[üu]r\s+diesen\s+Antrag\s+stimmen\s+[\d.,]+\s+" r"\(Ja\s*-?\s*Stimmen\)\s*$",
         "",
         text,
     )
     text = re.sub(
-        r"(?m)^Gegen\s+diesen\s+Antrag\s+stimmen\s+[\d.,]+\s+"
-        r"\(Nein\s*-?\s*Stimmen\)\s*$",
+        r"(?m)^Gegen\s+diesen\s+Antrag\s+stimmen\s+[\d.,]+\s+" r"\(Nein\s*-?\s*Stimmen\)\s*$",
         "",
         text,
     )
@@ -217,8 +214,7 @@ def clean_description(text: str) -> str:
     # Vote results (old format: "X Ja-Stimmen X Nein-Stimmen X Enthaltungen")
     text = re.sub(r"(?m)^Abstimmungsergebnis:\s*$", "", text)
     text = re.sub(
-        r"(?m)^[\d.,]+\s+Ja-Stimmen\s+[\d.,]+\s+Nein-Stimmen\s+"
-        r"[\d.,]+\s+Enthaltungen\s*$",
+        r"(?m)^[\d.,]+\s+Ja-Stimmen\s+[\d.,]+\s+Nein-Stimmen\s+" r"[\d.,]+\s+Enthaltungen\s*$",
         "",
         text,
     )
@@ -236,8 +232,7 @@ def clean_description(text: str) -> str:
         text,
     )
     text = re.sub(
-        r"(?m)^Der\s+Versammlungsleiter\s+verk[üu]ndet\s+"
-        r"das\s+Beschlussergebnis\.?\s*$",
+        r"(?m)^Der\s+Versammlungsleiter\s+verk[üu]ndet\s+" r"das\s+Beschlussergebnis\.?\s*$",
         "",
         text,
     )

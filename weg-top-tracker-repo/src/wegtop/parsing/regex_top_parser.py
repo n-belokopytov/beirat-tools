@@ -5,7 +5,13 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 
 from ..models import ParsedTOP
-from ..text_utils import normalize_text, safe_int, clean_title_text, clean_description, detect_title_orthography_issues
+from ..text_utils import (
+    normalize_text,
+    safe_int,
+    clean_title_text,
+    clean_description,
+    detect_title_orthography_issues,
+)
 
 TOP_HEADER_RE = re.compile(
     r"(?mi)^\s*(?:(?:seite|s\.)\s*\d+[\s\).:-]+|\d+[\s\).:-]+)?"
